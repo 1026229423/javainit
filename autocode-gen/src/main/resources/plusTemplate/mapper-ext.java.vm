@@ -1,0 +1,23 @@
+package ${package.Mapper};
+
+import ${extParentPkg}.${entity}Mapper;
+import org.springframework.context.annotation.Primary;
+#if(${mapperAnnotationClass})
+import ${mapperAnnotationClass.name};
+#end
+/**
+ * <p>
+ * $!{table.comment} Mapper Ext 接口,自定义SQL
+ * </p>
+ */
+#if(${mapperAnnotationClass})
+@${mapperAnnotationClass.simpleName}
+#end
+@Primary
+#if(${kotlin})
+interface ${table.mapperName} : ${entity}PlusMapper
+#else
+public interface ${table.mapperName} extends ${entity}Mapper {
+
+}
+#end

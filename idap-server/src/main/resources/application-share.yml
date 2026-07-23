@@ -1,0 +1,32 @@
+spring:
+  http:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+    encoding:
+      force: true
+      charset: UTF-8
+      enabled: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  threads:
+    virtual-enabled: true
+
+server:
+  port: 8090
+  context-path: /
+  maxHttpPostSize: 10240000
+  maxHttpHeaderSize: 10240000
+  connection-timeout: -1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+      show-trace: always

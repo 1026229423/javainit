@@ -1,0 +1,21 @@
+dubbo:
+  registry:
+    address: zookeeper://genesisapp:Y*iaciej123456!@10.69.17.122:2181?backup=10.69.17.123:2181,10.69.17.127:2181
+
+spring:
+  redis:
+    database: 1
+    password: redis3@PaaS
+    timeout: 60000
+    sentinel:
+      master: redists1
+      nodes: 10.46.2.154:26380,10.46.2.155:26380,10.46.2.156:26380
+
+ca:
+  auth:
+    url: http://10.46.47.131:18000
+    url302: http://utest.orientsec.com.cn
+    url302_bak: http://10.46.47.131:18000
+  appId: f72035c87dfe4606
+  clientSecret: 8cd6e3bfc5ce46ec
+  domainName: http://qa.idap.orientsec.com.cn

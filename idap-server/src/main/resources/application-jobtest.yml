@@ -1,0 +1,11 @@
+xxl:
+  job:
+    admin:
+      addresses: http://10.45.7.211:8088/xxl-job-admin
+    executor:
+      appname: ibond-dev-9998
+      ip: 172.29.115.218
+      port: 9998
+      logpath: /data/xxl-job/jobhandler
+      logretentiondays: -1
+    accessToken:

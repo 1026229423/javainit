@@ -1,0 +1,5 @@
+spring:
+  profiles:
+    active: idaptest,share,authdev,jobtest
+  application:
+    name: idap-server

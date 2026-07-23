@@ -1,0 +1,40 @@
+sso:
+  appId: ggn8PugJ2zI=
+  key: Poa1egYzusDiVzfiHLxxbwephoFM3Pth
+  iv: rqiu+e5oAk4=
+  validateUrlPrefix: http://ssotest.orientsec.com.cn:8090/ssoserver/SSO.aspx?
+  loginUrl: http://portaltest.orientsec.com.cn:10040/wps/portal
+
+dubbo:
+  registry:
+    address: zookeeper://genesisapp:Yxiaciej123456!@10.69.17.122:2181?backup=10.69.17.123:2181,10.69.17.127:2181
+
+spring:
+  redis:
+    database: 1
+    password: redis3@PaaS
+    timeout: 60000
+    sentinel:
+      master: redists1
+      nodes: 10.46.2.154:26380,10.46.2.155:26380,10.46.2.156:26380
+
+xxl:
+  job:
+    admin:
+      addresses: http://10.45.7.211:8088/xxl-job-admin
+    executor:
+      appname: ibond-dev-9998
+      ip: 172.29.115.218
+      port: 9998
+      logpath: /data/xxl-job/jobhandler
+      logretentiondays: -1
+    accessToken:
+
+ca:
+  auth:
+    url: http://10.46.47.131:18000
+    url302: http://utest.orientsec.com.cn
+    url302_bak: http://10.46.47.131:18000
+  appId: a427d60d35bb44b7
+  clientSecret: ac647452d4cbeed3
+  domainName: http://localhost:8081

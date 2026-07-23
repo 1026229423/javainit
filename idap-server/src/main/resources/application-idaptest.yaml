@@ -1,0 +1,17 @@
+datasource:
+  idap:
+    dbType: mysql
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    jdbc-url: jdbc:mysql://10.46.41.138:3307/idap_dev?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&nullCatalogMeansCurrent=true
+    username: root
+    password: MySQL.123456
+    mapperLocation: classpath*:com/orientsec/idap/core/mapper/**/*.xml
+    autoCommit: false
+    connectionTimeout: 5000
+    idleTimeout: 300000
+    maxLifetime: 1200000
+    minimumIdle: 5
+    maximumPoolSize: 15
+    poolName: pool-idap
+    validationTimeout: 10000

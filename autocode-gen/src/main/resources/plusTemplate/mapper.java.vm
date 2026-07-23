@@ -1,0 +1,31 @@
+package ${package.Mapper};
+
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import ${package.Entity}.${entity};
+import ${superMapperClassPackage};
+#if(${mapperAnnotationClass})
+import ${mapperAnnotationClass.name};
+#end
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * <p>
+ * $!{table.comment} Mapper 接口
+ * </p>
+ */
+#if(${mapperAnnotationClass})
+@${mapperAnnotationClass.simpleName}
+#end
+#if(${kotlin})
+interface ${table.mapperName} : ${superMapperClass}<${entity}>
+#else
+public interface ${table.mapperName} extends ${superMapperClass}<${entity}> {
+
+    @Select("select * from ${schemaName}${table.name} ${ew.customSqlSegment}")
+    List<Map<String,Object>> selectListToMap(@Param("ew") Wrapper<${entity}> wrapper);
+}
+#end
