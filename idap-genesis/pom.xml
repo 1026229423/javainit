@@ -33,35 +33,68 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>com.orientsec.genesis</groupId>
-            <artifactId>genesis-auth-filter-bjca</artifactId>
-            <version>${genesis.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>tk.mybatis</groupId>
-                    <artifactId>mapper</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.orientsec.genesis</groupId>
-            <artifactId>genesis-auth-dubbo-api</artifactId>
-            <version>${genesis.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.orientsec.genesis</groupId>
-            <artifactId>genesis-ldap-service-common</artifactId>
-            <version>${genesis.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.orientsec.genesis</groupId>
-            <artifactId>genesis-ldap-dubbo-api</artifactId>
-            <version>${genesis.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.orientsec.idap</groupId>
             <artifactId>idap-common</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <!-- 外网默认仅编译 PackageBase，隔离 BJCA/SSO/Dubbo/LDAP 实现源码。 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>com/orientsec/genesis/auth/controller/**</exclude>
+                        <exclude>com/orientsec/genesis/auth/service/**</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    <profiles>
+        <profile>
+            <id>intranet</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.orientsec.genesis</groupId>
+                    <artifactId>genesis-auth-filter-bjca</artifactId>
+                    <version>${genesis.version}</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>tk.mybatis</groupId>
+                            <artifactId>mapper</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>com.orientsec.genesis</groupId>
+                    <artifactId>genesis-auth-dubbo-api</artifactId>
+                    <version>${genesis.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.orientsec.genesis</groupId>
+                    <artifactId>genesis-ldap-service-common</artifactId>
+                    <version>${genesis.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.orientsec.genesis</groupId>
+                    <artifactId>genesis-ldap-dubbo-api</artifactId>
+                    <version>${genesis.version}</version>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <excludes combine.self="override"/>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

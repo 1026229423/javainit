@@ -30,3 +30,17 @@ management:
     health:
       show-details: always
       show-trace: always
+
+# audit-ai is an internal service boundary. Keep it disabled until deployment
+# supplies a service URL, an internal token, and an explicit permission scope.
+audit:
+  ai:
+    query:
+      enabled: ${AUDIT_AI_QUERY_ENABLED:false}
+      base-url: ${AUDIT_AI_BASE_URL:}
+      internal-token: ${AUDIT_AI_INTERNAL_TOKEN:}
+      # Empty permission tags are rejected by Java instead of defaulting to an unrestricted scope.
+      permission-tags: ${AUDIT_AI_PERMISSION_TAGS:}
+      corpus-types: ${AUDIT_AI_CORPUS_TYPES:internal,external,qa,case}
+      connect-timeout-ms: ${AUDIT_AI_CONNECT_TIMEOUT_MS:5000}
+      read-timeout-ms: ${AUDIT_AI_READ_TIMEOUT_MS:60000}
