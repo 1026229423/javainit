@@ -107,6 +107,45 @@ public class AuditAiQueryClientTest {
         }
     }
 
+    @Test
+    public void forwardsPermissionScopeWhenLoadingClauseDetail() throws Exception {
+        final AtomicReference<String> requestBody = new AtomicReference<>();
+        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/v1/query", exchange -> {
+            String response = "{\"citations\":[],\"structured\":{\"regulatory_rules\":{\"items\":[{\"clause_id\":\"CLAUSE-1\",\"source_code\":\"SOURCE-1\",\"source_doc_id\":\"DOC-1\"}]}}}";
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, response.getBytes("UTF-8").length);
+            OutputStream output = exchange.getResponseBody();
+            output.write(response.getBytes("UTF-8"));
+            output.close();
+        });
+        server.createContext("/v1/dm/clauses/SOURCE-1", exchange -> {
+            java.util.Scanner scanner = new java.util.Scanner(exchange.getRequestBody(), "UTF-8").useDelimiter("\\A");
+            requestBody.set(scanner.hasNext() ? scanner.next() : "");
+            String response = "{\"clause_id\":\"SOURCE-1\",\"doc_title\":\"信息披露管理办法\","
+                    + "\"full_text\":\"这是完整条款正文，不是140字检索摘要。\"}";
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, response.getBytes("UTF-8").length);
+            OutputStream output = exchange.getResponseBody();
+            output.write(response.getBytes("UTF-8"));
+            output.close();
+        });
+        server.start();
+        try {
+            AuditAiQueryClient client = configuredClient(server);
+            RegulationQueryRequest request = new RegulationQueryRequest();
+            request.setQuestion("信息披露要求");
+            client.query(request, "query-1");
+            Map<String, Object> detail = client.queryClauseDetail("CLAUSE-1");
+
+            assertEquals("SOURCE-1", detail.get("clause_id"));
+            assertEquals("这是完整条款正文，不是140字检索摘要。", detail.get("full_text"));
+            assertTrue(requestBody.get().contains("DOC-1"));
+        } finally {
+            server.stop(0);
+        }
+    }
+
     private AuditAiQueryClient configuredClient(HttpServer server) throws Exception {
         AuditAiQueryClient client = new AuditAiQueryClient();
         setField(client, "enabled", true);

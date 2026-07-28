@@ -80,6 +80,24 @@ public class RegulationQueryController {
         }
     }
 
+    @GetMapping(value = "/clauses/{clauseId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> clauseDetail(@PathVariable String clauseId) {
+        if (isBlank(clauseId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(resourceError("REGULATION_CLAUSE_INVALID_ID", "条款标识不能为空。"));
+        }
+
+        try {
+            Result<Map<String, Object>> result = ResultGenerator.genSuccessResult(auditAiQueryClient.queryClauseDetail(clauseId));
+            return ResponseEntity.ok(result);
+        } catch (AuditAiQueryClient.QueryException e) {
+            HttpStatus status = "REGULATION_CLAUSE_NOT_FOUND".equals(e.getCode())
+                    ? HttpStatus.NOT_FOUND : HttpStatus.SERVICE_UNAVAILABLE;
+            log.warn("regulation clause detail failed, clauseId={}, code={}", clauseId, e.getCode());
+            return ResponseEntity.status(status).body(resourceError(e.getCode(), e.getMessage()));
+        }
+    }
+
     private ResponseEntity<Map<String, Object>> error(HttpStatus status, AuditAiBoundaryResponseAdapter adapter,
                                                        String code, String message) {
         return ResponseEntity.status(status).body(adapter.error(code, message));
