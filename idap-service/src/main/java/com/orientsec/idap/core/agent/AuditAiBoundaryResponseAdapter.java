@@ -3,10 +3,11 @@ package com.orientsec.idap.core.agent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Converts audit-ai's complete JSON response into the browser-facing JSON contract. */
+/** Converts task-runtime's completed policy-query response into the browser-facing JSON contract. */
 public class AuditAiBoundaryResponseAdapter {
     private final String sessionId;
     private final String queryId;
@@ -22,26 +23,29 @@ public class AuditAiBoundaryResponseAdapter {
     public Map<String, Object> success(Map<String, Object> upstream) {
         Map<String, Object> response = new HashMap<>();
         response.put("context", context());
-        response.put("answer_blocks", list(upstream.get("answer_blocks")));
-        response.put("citations", list(upstream.get("citations")));
+        Map<String, Object> answer = map(upstream.get("answer"));
+        List<Object> basis = list(answer.get("basis"));
+        Map<String, Object> answerBlock = new HashMap<>();
+        answerBlock.put("block_seq", 0);
+        answerBlock.put("block_type", "text");
+        answerBlock.put("content", valueOr(answer.get("conclusion"), ""));
+        response.put("answer_blocks", Collections.<Object>singletonList(answerBlock));
+        response.put("citations", basis);
 
-        Map<String, Object> meta = map(upstream.get("meta"));
-        Map<String, Object> completion = map(upstream.get("completion"));
-        Map<String, Object> structured = map(upstream.get("structured"));
-        Map<String, Object> regulations = map(structured.get("regulations"));
-        Map<String, Object> clauses = map(structured.get("clauses"));
-        Map<String, Object> rules = map(structured.get("regulatory_rules"));
-        Map<String, Object> cases = map(structured.get("cases"));
+        Map<String, Object> completion = answer;
+        List<Object> regulations = regulations(basis);
+        List<Object> clauses = clauses(basis);
+        List<Object> rules = rules(basis);
+        List<Object> cases = Collections.emptyList();
         Map<String, Object> result = new HashMap<>();
-        result.put("elapsed_ms", meta.get("elapsed_ms"));
+        result.put("elapsed_ms", null);
         result.put("summary", null);
         result.put("counts", counts(regulations, clauses, rules, cases));
-        result.put("regulations", tabItems(regulations));
-        result.put("clauses", tabItems(clauses));
-        result.put("rules", tabItems(rules));
-        result.put("cases", tabItems(cases));
-        List<Object> citationAdvice = list(structured.get("citation_advice"));
-        result.put("citation_advice", citationAdvice.isEmpty() ? list(upstream.get("citations")) : citationAdvice);
+        result.put("regulations", regulations);
+        result.put("clauses", clauses);
+        result.put("rules", rules);
+        result.put("cases", cases);
+        result.put("citation_advice", basis);
         response.put("result", result);
 
         Map<String, Object> browserCompletion = new HashMap<>();
@@ -74,26 +78,79 @@ public class AuditAiBoundaryResponseAdapter {
         return context;
     }
 
-    private Map<String, Object> counts(Map<String, Object> regulations, Map<String, Object> clauses,
-                                       Map<String, Object> rules, Map<String, Object> cases) {
+    private Map<String, Object> counts(List<Object> regulations, List<Object> clauses,
+                                       List<Object> rules, List<Object> cases) {
         Map<String, Object> counts = new HashMap<>();
-        counts.put("regulations", tabCount(regulations));
-        counts.put("clauses", tabCount(clauses));
-        counts.put("rules", tabCount(rules));
-        counts.put("cases", tabCount(cases));
+        counts.put("regulations", regulations.size());
+        counts.put("clauses", clauses.size());
+        counts.put("rules", rules.size());
+        counts.put("cases", cases.size());
         return counts;
     }
 
-    private List<Object> tabItems(Map<String, Object> tab) {
-        return list(tab.get("items"));
+    private List<Object> regulations(List<Object> basis) {
+        Map<String, Object> byDocument = new LinkedHashMap<>();
+        for (Object item : basis) {
+            Map<String, Object> citation = map(item);
+            if (!"internal".equals(stringValue(citation.get("corpus_type")))) {
+                continue;
+            }
+            String documentId = stringValue(citation.get("source_doc_id"));
+            if (documentId.length() == 0) {
+                documentId = stringValue(citation.get("doc_title"));
+            }
+            if (documentId.length() == 0 || byDocument.containsKey(documentId)) {
+                continue;
+            }
+            Map<String, Object> row = new HashMap<>();
+            row.put("doc_id", documentId);
+            row.put("doc_title", citation.get("doc_title"));
+            row.put("doc_no", citation.get("source_code"));
+            row.put("clause_excerpt", citation.get("clause_path"));
+            row.put("match_score", citation.get("score"));
+            byDocument.put(documentId, row);
+        }
+        return new ArrayList<Object>(byDocument.values());
     }
 
-    private int tabCount(Map<String, Object> tab) {
-        Object total = tab.get("total");
-        if (total instanceof Number) {
-            return ((Number) total).intValue();
+    private List<Object> clauses(List<Object> basis) {
+        List<Object> rows = new ArrayList<>();
+        for (Object item : basis) {
+            Map<String, Object> citation = map(item);
+            if (!"internal".equals(stringValue(citation.get("corpus_type")))) {
+                continue;
+            }
+            Map<String, Object> row = new HashMap<>();
+            row.put("clause_id", citation.get("clause_id"));
+            row.put("doc_title", citation.get("doc_title"));
+            row.put("clause_path", citation.get("clause_path"));
+            row.put("snippet", citation.get("clause_path"));
+            row.put("theme", citation.get("corpus_type"));
+            row.put("match_score", citation.get("score"));
+            rows.add(row);
         }
-        return tabItems(tab).size();
+        return rows;
+    }
+
+    private List<Object> rules(List<Object> basis) {
+        List<Object> rows = new ArrayList<>();
+        for (Object item : basis) {
+            Map<String, Object> citation = map(item);
+            if (!"external".equals(stringValue(citation.get("corpus_type")))) {
+                continue;
+            }
+            Map<String, Object> row = new HashMap<>();
+            row.put("doc_id", valueOr(citation.get("source_doc_id"), citation.get("doc_title")));
+            row.put("clause_id", citation.get("clause_id"));
+            row.put("title", citation.get("doc_title"));
+            row.put("issuer", "");
+            row.put("doc_no", citation.get("source_code"));
+            row.put("core_requirement", citation.get("clause_path"));
+            row.put("full_text", citation.get("text"));
+            row.put("theme", "外部法规");
+            rows.add(row);
+        }
+        return rows;
     }
 
     @SuppressWarnings("unchecked")
@@ -108,5 +165,9 @@ public class AuditAiBoundaryResponseAdapter {
 
     private Object valueOr(Object value, Object fallback) {
         return value == null ? fallback : value;
+    }
+
+    private String stringValue(Object value) {
+        return value instanceof String ? (String) value : "";
     }
 }

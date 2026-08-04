@@ -31,17 +31,18 @@ management:
       show-details: always
       show-trace: always
 
-# audit-ai is an internal service boundary. Keep it disabled until deployment
-# supplies a service URL, an internal token, and an explicit permission scope.
-audit:
-  ai:
+# dfzq-pi task-runtime is an internal service boundary. The port and token are
+# supplied by its runtime environment; Java must use the same values.
+task:
+  runtime:
     query:
-      enabled: ${AUDIT_AI_QUERY_ENABLED:false}
-      base-url: ${AUDIT_AI_BASE_URL:}
-      internal-token: ${AUDIT_AI_INTERNAL_TOKEN:}
-      # Empty permission tags are rejected by Java instead of defaulting to an unrestricted scope.
-      permission-tags: ${AUDIT_AI_PERMISSION_TAGS:}
-      corpus-types: ${AUDIT_AI_CORPUS_TYPES:internal,external,qa,case}
-      connect-timeout-ms: ${AUDIT_AI_CONNECT_TIMEOUT_MS:5000}
-      read-timeout-ms: ${AUDIT_AI_READ_TIMEOUT_MS:60000}
-      source-reference-ttl-ms: ${AUDIT_AI_SOURCE_REFERENCE_TTL_MS:600000}
+      enabled: ${TASK_RUNTIME_QUERY_ENABLED:false}
+      host: ${TASK_RUNTIME_HOST:127.0.0.1}
+      port: ${TASK_RUNTIME_PORT:0}
+      internal-token: ${TASK_RUNTIME_INTERNAL_TOKEN:}
+      permission-tags: ${TASK_RUNTIME_PERMISSION_TAGS:}
+      corpus-types: ${TASK_RUNTIME_CORPUS_TYPES:internal}
+      connect-timeout-ms: ${TASK_RUNTIME_CONNECT_TIMEOUT_MS:5000}
+      read-timeout-ms: ${TASK_RUNTIME_READ_TIMEOUT_MS:60000}
+      poll-interval-ms: ${TASK_RUNTIME_POLL_INTERVAL_MS:500}
+      poll-timeout-ms: ${TASK_RUNTIME_POLL_TIMEOUT_MS:900000}
