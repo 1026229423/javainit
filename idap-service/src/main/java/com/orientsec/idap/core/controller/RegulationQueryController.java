@@ -4,6 +4,7 @@ import com.orientsec.idap.core.agent.TaskRuntimeQueryClient;
 import com.orientsec.idap.core.agent.TaskRuntimeBoundaryResponseAdapter;
 import com.orientsec.idap.core.agent.RegulationQueryRequest;
 import com.orientsec.idap.core.agent.ClauseDetailCache;
+import com.orientsec.idap.core.agent.history.RegulationHistoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,11 +31,14 @@ public class RegulationQueryController {
     private static final int MAX_QUESTION_LENGTH = 2000;
     private final TaskRuntimeQueryClient taskRuntimeQueryClient;
     private final ClauseDetailCache clauseDetailCache;
+    private final RegulationHistoryService historyService;
 
     @Autowired
-    public RegulationQueryController(TaskRuntimeQueryClient taskRuntimeQueryClient, ClauseDetailCache clauseDetailCache) {
+    public RegulationQueryController(TaskRuntimeQueryClient taskRuntimeQueryClient, ClauseDetailCache clauseDetailCache,
+                                     RegulationHistoryService historyService) {
         this.taskRuntimeQueryClient = taskRuntimeQueryClient;
         this.clauseDetailCache = clauseDetailCache;
+        this.historyService = historyService;
     }
 
     @PostMapping(value = "/queries", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -44,6 +48,10 @@ public class RegulationQueryController {
         TaskRuntimeBoundaryResponseAdapter adapter = new TaskRuntimeBoundaryResponseAdapter(
                 sessionId, queryId, request.getQuestion());
 
+        if (!"query".equalsIgnoreCase(request.getOperation())) {
+            return error(HttpStatus.BAD_REQUEST, adapter, "REGULATION_QUERY_OPERATION_UNSUPPORTED",
+                    "该入口仅支持制度查询，请前往“制度比对”提交比对任务。");
+        }
         if (isBlank(request.getQuestion())) {
             return error(HttpStatus.BAD_REQUEST, adapter, "REGULATION_QUERY_INVALID_REQUEST", "问题不能为空。");
         }
@@ -57,7 +65,14 @@ public class RegulationQueryController {
         try {
             Map<String, Object> upstream = taskRuntimeQueryClient.query(request, queryId);
             clauseDetailCache.remember(upstream);
-            return ResponseEntity.ok(adapter.success(upstream));
+            Map<String, Object> response = adapter.success(upstream);
+            try {
+                historyService.append(sessionId, queryId, request.getQuestion(), response);
+            } catch (RuntimeException historyError) {
+                log.error("regulation history save failed, sessionId={}, queryId={}",
+                        sessionId, queryId, historyError);
+            }
+            return ResponseEntity.ok(response);
         } catch (TaskRuntimeQueryClient.QueryException e) {
             log.warn("regulation query failed, queryId={}, code={}", queryId, e.getCode());
             return error(HttpStatus.SERVICE_UNAVAILABLE, adapter, e.getCode(), e.getMessage());

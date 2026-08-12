@@ -6,7 +6,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RegulationQueryRequest {
+    private String operation = "query";
     private String question;
+
+    public String getOperation() {
+        return operation == null || operation.trim().isEmpty() ? "query" : operation;
+    }
+
+    public void setOperation(String operation) {
+        this.operation = operation;
+    }
 
     @JsonProperty("session_id")
     private String sessionId;

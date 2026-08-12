@@ -1,23 +1,23 @@
 spring:
   http:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
+      max-file-size: 50MB
+      max-request-size: 50MB
     encoding:
       force: true
       charset: UTF-8
       enabled: true
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
+      max-file-size: 50MB
+      max-request-size: 50MB
   threads:
     virtual-enabled: true
 
 server:
   port: 8090
   context-path: /
-  maxHttpPostSize: 10240000
+  maxHttpPostSize: 52428800
   maxHttpHeaderSize: 10240000
   connection-timeout: -1
 
@@ -46,3 +46,23 @@ task:
       read-timeout-ms: ${TASK_RUNTIME_READ_TIMEOUT_MS:60000}
       poll-interval-ms: ${TASK_RUNTIME_POLL_INTERVAL_MS:500}
       poll-timeout-ms: ${TASK_RUNTIME_POLL_TIMEOUT_MS:900000}
+    compare:
+      enabled: ${TASK_RUNTIME_COMPARE_ENABLED:${TASK_RUNTIME_QUERY_ENABLED:false}}
+      host: ${TASK_RUNTIME_COMPARE_HOST:${TASK_RUNTIME_HOST:127.0.0.1}}
+      port: ${TASK_RUNTIME_COMPARE_PORT:${TASK_RUNTIME_PORT:0}}
+      internal-token: ${TASK_RUNTIME_COMPARE_INTERNAL_TOKEN:${TASK_RUNTIME_INTERNAL_TOKEN:}}
+      permission-tags: ${TASK_RUNTIME_COMPARE_PERMISSION_TAGS:${TASK_RUNTIME_PERMISSION_TAGS:}}
+      corpus-types: ${TASK_RUNTIME_COMPARE_CORPUS_TYPES:internal}
+      connect-timeout-ms: ${TASK_RUNTIME_COMPARE_CONNECT_TIMEOUT_MS:5000}
+      read-timeout-ms: ${TASK_RUNTIME_COMPARE_READ_TIMEOUT_MS:60000}
+
+policy:
+  compare:
+    upload:
+      enabled: ${POLICY_COMPARE_UPLOAD_ENABLED:false}
+      endpoint: ${POLICY_COMPARE_MINIO_ENDPOINT:}
+      bucket: ${POLICY_COMPARE_MINIO_BUCKET:}
+      access-key: ${POLICY_COMPARE_MINIO_ACCESS_KEY:}
+      secret-key: ${POLICY_COMPARE_MINIO_SECRET_KEY:}
+      region: ${POLICY_COMPARE_MINIO_REGION:us-east-1}
+      max-bytes: ${POLICY_COMPARE_UPLOAD_MAX_BYTES:52428800}

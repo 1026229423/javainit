@@ -38,6 +38,7 @@ public class TaskRuntimeQueryClientTest {
                     + "\"conclusion\":\"应当留存适当性材料。\",\"basis\":[{\"clause_id\":\"C-1\","
                     + "\"doc_title\":\"证券公司监督管理条例\",\"clause_path\":\"第十条\","
                     + "\"corpus_type\":\"external\",\"source_doc_id\":\"DOC-1\",\"score\":0.8}],"
+                    + "\"source_details\":[{\"clause_id\":\"C-1\",\"text\":\"第十条原文\"}],"
                     + "\"confidence\":\"high\",\"finish_reason\":\"stop\"}}");
         });
         server.start();
@@ -63,6 +64,7 @@ public class TaskRuntimeQueryClientTest {
             assertEquals(1, ((Map) resultView.get("counts")).get("rules"));
             assertEquals("证券公司监督管理条例", ((Map) ((List) resultView.get("rules")).get(0)).get("title"));
             assertEquals("C-1", ((Map) ((List) resultView.get("rules")).get(0)).get("clause_id"));
+            assertEquals("第十条原文", ((Map) ((List) resultView.get("rules")).get(0)).get("full_text"));
         } finally {
             server.stop(0);
         }

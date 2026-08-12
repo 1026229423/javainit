@@ -25,6 +25,7 @@ public class AuditAiBoundaryResponseAdapter {
         response.put("context", context());
         Map<String, Object> answer = map(upstream.get("answer"));
         List<Object> basis = list(answer.get("basis"));
+
         Map<String, Object> answerBlock = new HashMap<>();
         answerBlock.put("block_seq", 0);
         answerBlock.put("block_type", "text");
@@ -33,9 +34,10 @@ public class AuditAiBoundaryResponseAdapter {
         response.put("citations", basis);
 
         Map<String, Object> completion = answer;
+        Map<String, Object> detailsByClause = sourceDetailsByClause(answer.get("source_details"));
         List<Object> regulations = regulations(basis);
         List<Object> clauses = clauses(basis);
-        List<Object> rules = rules(basis);
+        List<Object> rules = rules(basis, detailsByClause);
         List<Object> cases = Collections.emptyList();
         Map<String, Object> result = new HashMap<>();
         result.put("elapsed_ms", null);
@@ -132,7 +134,7 @@ public class AuditAiBoundaryResponseAdapter {
         return rows;
     }
 
-    private List<Object> rules(List<Object> basis) {
+    private List<Object> rules(List<Object> basis, Map<String, Object> detailsByClause) {
         List<Object> rows = new ArrayList<>();
         for (Object item : basis) {
             Map<String, Object> citation = map(item);
@@ -146,11 +148,23 @@ public class AuditAiBoundaryResponseAdapter {
             row.put("issuer", "");
             row.put("doc_no", citation.get("source_code"));
             row.put("core_requirement", citation.get("clause_path"));
-            row.put("full_text", citation.get("text"));
+            Map<String, Object> detail = map(detailsByClause.get(stringValue(citation.get("clause_id"))));
+            row.put("full_text", detail.get("text"));
             row.put("theme", "外部法规");
             rows.add(row);
         }
         return rows;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> sourceDetailsByClause(Object value) {
+        Map<String, Object> result = new HashMap<>();
+        for (Object item : list(value)) {
+            Map<String, Object> detail = map(item);
+            String clauseId = stringValue(detail.get("clause_id"));
+            if (!clauseId.isEmpty()) result.put(clauseId, detail);
+        }
+        return result;
     }
 
     @SuppressWarnings("unchecked")

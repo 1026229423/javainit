@@ -20,8 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Stable Java boundary for policy comparison. Execution remains intentionally
- * pending until task-runtime publishes the corresponding task kinds.
+ * Stable Java boundary for policy comparison. Published task-runtime capabilities
+ * execute upstream; unsupported comparison modes remain explicit pending tasks.
  */
 @RestController
 @RequestMapping("/api/v1/policy-compare/tasks")
@@ -41,6 +41,8 @@ public class PolicyCompareTaskController {
         } catch (PolicyCompareTaskService.ValidationException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(error("POLICY_COMPARE_INVALID_REQUEST", e.getMessage()));
+        } catch (PolicyCompareTaskService.ExecutionException e) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error(e.getCode(), e.getMessage()));
         }
     }
 
@@ -59,7 +61,12 @@ public class PolicyCompareTaskController {
 
     @GetMapping(value = "/{taskId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> detail(@PathVariable String taskId) {
-        PolicyCompareTaskView task = taskService.find(taskId);
+        PolicyCompareTaskView task;
+        try {
+            task = taskService.find(taskId);
+        } catch (PolicyCompareTaskService.ExecutionException e) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error(e.getCode(), e.getMessage()));
+        }
         if (task == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(error("POLICY_COMPARE_TASK_NOT_FOUND", "比对任务不存在或当前服务已重启。"));
